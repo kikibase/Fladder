@@ -24,7 +24,7 @@ class DashboardNotifier extends StateNotifier<HomeModel> {
 
   Future<void> fetchNextUpAndResume() async {
     if (state.loading) return;
-    state = state.copyWith(loading: true);
+    state.setLoading(true);
     final viewTypes =
         ref.read(viewsProvider.select((value) => value.dashboardViews)).map((e) => e.collectionType).toSet().toList();
 
@@ -48,84 +48,92 @@ class DashboardNotifier extends StateNotifier<HomeModel> {
       ItemFields.airtime,
     };
 
-    if (viewTypes.containsAny([CollectionType.livetv])) {
-      List<ChannelModel> channels = (await api.liveTvChannelsGet(limit: limit))
-              .body
-              ?.items
-              ?.map((e) => ChannelModel.fromBaseDto(e, ref))
-              .toList() ??
-          [];
-
-      channels = await Future.wait(
-        channels.map(
-          (e) async {
-            final programs = await ref.read(liveTvProvider.notifier).fetchProgramsForChannel(e);
-            return e.copyChannelWith(
-              programs: programs,
-            );
-          },
-        ),
-      );
-
-      state = state.copyWith(activePrograms: channels);
-    }
-
-    if (viewTypes.containsAny([CollectionType.movies, CollectionType.tvshows])) {
-      final resumeVideoResponse = await api.usersUserIdItemsResumeGet(
-        enableImageTypes: imagesToFetch,
-        fields: fieldsToFetch.toList(),
-        mediaTypes: [MediaType.video],
-        enableTotalRecordCount: false,
-        limit: limit,
-      );
-
-      state = state.copyWith(
-        resumeVideo: resumeVideoResponse.body?.items?.map((e) => ItemBaseModel.fromBaseDto(e, ref)).toList(),
-      );
-    }
-
-    if (viewTypes.contains(CollectionType.music)) {
-      final resumeAudioResponse = await api.usersUserIdItemsResumeGet(
-        enableImageTypes: imagesToFetch,
-        fields: fieldsToFetch.toList(),
-        mediaTypes: [MediaType.audio],
-        enableTotalRecordCount: false,
-        limit: limit,
-      );
-
-      state = state.copyWith(
-        resumeAudio: resumeAudioResponse.body?.items?.map((e) => ItemBaseModel.fromBaseDto(e, ref)).toList(),
-      );
-    }
-
-    if (viewTypes.contains(CollectionType.books)) {
-      final resumeBookResponse = await api.usersUserIdItemsResumeGet(
-        enableImageTypes: imagesToFetch,
-        fields: fieldsToFetch.toList(),
-        mediaTypes: [MediaType.book],
-        enableTotalRecordCount: false,
-        limit: limit,
-      );
-
-      state = state.copyWith(
-        resumeBooks: resumeBookResponse.body?.items?.map((e) => ItemBaseModel.fromBaseDto(e, ref)).toList(),
-      );
+    // Sequentially process each view type using add/update functions
+    for (final viewType in viewTypes) {
+      switch (viewType) {
+        case CollectionType.livetv:
+          List<ChannelModel> channels = (await api.liveTvChannelsGet(limit: limit))
+                  .body
+                  ?.items
+                  ?.map((e) => ChannelModel.fromBaseDto(e, ref))
+                  .toList() ??
+              [];
+          channels = await Future.wait(
+            channels.map(
+              (e) async {
+                final programs = await ref.read(liveTvProvider.notifier).fetchProgramsForChannel(e);
+                return e.copyChannelWith(programs: programs);
+              },
+            ),
+          );
+          for (final channel in channels) {
+            state.aouActivePrograms(channel);
+          }
+          break;
+        case CollectionType.movies:
+        case CollectionType.tvshows:
+          final resumeVideoResponse = await api.usersUserIdItemsResumeGet(
+            enableImageTypes: imagesToFetch,
+            fields: fieldsToFetch.toList(),
+            mediaTypes: [MediaType.video],
+            enableTotalRecordCount: false,
+            limit: limit,
+          );
+          final videoItems =
+              resumeVideoResponse.body?.items?.map((e) => ItemBaseModel.fromBaseDto(e, ref)).toList() ?? [];
+          for (final item in videoItems) {
+            state.aouResumeVideo(item);
+          }
+          break;
+        case CollectionType.music:
+          final resumeAudioResponse = await api.usersUserIdItemsResumeGet(
+            enableImageTypes: imagesToFetch,
+            fields: fieldsToFetch.toList(),
+            mediaTypes: [MediaType.audio],
+            enableTotalRecordCount: false,
+            limit: limit,
+          );
+          final audioItems =
+              resumeAudioResponse.body?.items?.map((e) => ItemBaseModel.fromBaseDto(e, ref)).toList() ?? [];
+          for (final item in audioItems) {
+            state.aouResumeAudio(item);
+          }
+          break;
+        case CollectionType.books:
+          final resumeBookResponse = await api.usersUserIdItemsResumeGet(
+            enableImageTypes: imagesToFetch,
+            fields: fieldsToFetch.toList(),
+            mediaTypes: [MediaType.book],
+            enableTotalRecordCount: false,
+            limit: limit,
+          );
+          final bookItems =
+              resumeBookResponse.body?.items?.map((e) => ItemBaseModel.fromBaseDto(e, ref)).toList() ?? [];
+          for (final item in bookItems) {
+            state.aouResumeBooks(item);
+          }
+          break;
+        default:
+          break;
+      }
     }
 
     final nextResponse = await api.showsNextUpGet(
       nextUpDateCutoff: DateTime.now().subtract(
-          ref.read(clientSettingsProvider.select((value) => value.nextUpDateCutoff ?? const Duration(days: 28)))),
+        ref.read(clientSettingsProvider.select(
+          (value) => value.nextUpDateCutoff ?? const Duration(days: 28),
+        )),
+      ),
       fields: fieldsToFetch.toList(),
     );
 
-    final next = nextResponse.body?.items
-            ?.map(
-              (e) => ItemBaseModel.fromBaseDto(e, ref),
-            )
-            .toList() ??
-        [];
+    final next = nextResponse.body?.items?.map((e) => ItemBaseModel.fromBaseDto(e, ref)).toList() ?? [];
 
-    state = state.copyWith(nextUp: next, loading: false);
+    for (final item in next) {
+      state.aouNextUp(item);
+    }
+
+    state.setLoading(false);
   }
 
   void clear() {
