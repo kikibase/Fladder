@@ -24,6 +24,25 @@ import 'package:fladder/util/localization_helper.dart';
 import 'package:fladder/util/themes_data.dart';
 import 'package:fladder/widgets/media_query_scaler.dart';
 
+class _FladderScrollBehavior extends MaterialScrollBehavior {
+  const _FladderScrollBehavior({required this.enableMouseDrag});
+
+  final bool enableMouseDrag;
+
+  @override
+  Set<PointerDeviceKind> get dragDevices => {
+        ...super.dragDevices,
+        if (enableMouseDrag) PointerDeviceKind.mouse,
+      };
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) || other is _FladderScrollBehavior && other.enableMouseDrag == enableMouseDrag;
+
+  @override
+  int get hashCode => Object.hash(runtimeType, enableMouseDrag);
+}
+
 void main(List<String> args) async {
   WidgetsFlutterBinding.ensureInitialized();
 
@@ -77,7 +96,6 @@ class _FladderApp extends ConsumerWidget {
     final schemeVariant = ref.watch(clientSettingsProvider.select((value) => value.schemeVariant));
     final language = ref.watch(clientSettingsProvider
         .select((value) => value.selectedLocale ?? WidgetsBinding.instance.platformDispatcher.locale));
-    final scrollBehaviour = const MaterialScrollBehavior();
     return DynamicColorBuilder(
       builder: (ColorScheme? lightDynamic, ColorScheme? darkDynamic) {
         final baseLightTheme = themeColor == null
@@ -103,12 +121,7 @@ class _FladderApp extends ConsumerWidget {
           child: MaterialApp.router(
             onGenerateTitle: (context) => ref.watch(currentTitleProvider),
             theme: lightTheme,
-            scrollBehavior: scrollBehaviour.copyWith(
-              dragDevices: {
-                ...scrollBehaviour.dragDevices,
-                mouseDrag ? PointerDeviceKind.mouse : null,
-              }.nonNulls.toSet(),
-            ),
+            scrollBehavior: _FladderScrollBehavior(enableMouseDrag: mouseDrag),
             localizationsDelegates: FladderLocalizations.localizationsDelegates,
             supportedLocales: AppLocalizations.supportedLocales,
             locale: language,
