@@ -140,32 +140,28 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
             },
             posters: tvChannels,
           ),
-        if (resumeVideo.isNotEmpty &&
-            (homeSettings.nextUp == HomeNextUp.cont || homeSettings.nextUp == HomeNextUp.separate))
+        if (resumeVideo.isNotEmpty && (homeSettings.nextUp == HomeNextUp.cont || homeSettings.nextUp == HomeNextUp.separate))
           PosterRow(
             tvMode: useTVExpandedLayout,
             contentPadding: padding,
             label: context.localized.dashboardContinueWatching,
             posters: resumeVideo,
           ),
-        if (resumeAudio.isNotEmpty &&
-            (homeSettings.nextUp == HomeNextUp.cont || homeSettings.nextUp == HomeNextUp.separate))
+        if (resumeAudio.isNotEmpty && (homeSettings.nextUp == HomeNextUp.cont || homeSettings.nextUp == HomeNextUp.separate))
           PosterRow(
             tvMode: useTVExpandedLayout,
             contentPadding: padding,
             label: context.localized.dashboardContinueListening,
             posters: resumeAudio,
           ),
-        if (resumeBooks.isNotEmpty &&
-            (homeSettings.nextUp == HomeNextUp.cont || homeSettings.nextUp == HomeNextUp.separate))
+        if (resumeBooks.isNotEmpty && (homeSettings.nextUp == HomeNextUp.cont || homeSettings.nextUp == HomeNextUp.separate))
           PosterRow(
             tvMode: useTVExpandedLayout,
             contentPadding: padding,
             label: context.localized.dashboardContinueReading,
             posters: resumeBooks,
           ),
-        if (dashboardData.nextUp.isNotEmpty &&
-            (homeSettings.nextUp == HomeNextUp.nextUp || homeSettings.nextUp == HomeNextUp.separate))
+        if (dashboardData.nextUp.isNotEmpty && (homeSettings.nextUp == HomeNextUp.nextUp || homeSettings.nextUp == HomeNextUp.separate))
           PosterRow(
             tvMode: useTVExpandedLayout,
             contentPadding: padding,

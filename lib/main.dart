@@ -23,6 +23,7 @@ import 'package:fladder/util/deep_link_helper.dart';
 import 'package:fladder/util/localization_helper.dart';
 import 'package:fladder/util/themes_data.dart';
 import 'package:fladder/widgets/media_query_scaler.dart';
+import 'package:riverpod_devtools/riverpod_devtools.dart';
 
 class _FladderScrollBehavior extends MaterialScrollBehavior {
   const _FladderScrollBehavior({required this.enableMouseDrag});
@@ -36,8 +37,7 @@ class _FladderScrollBehavior extends MaterialScrollBehavior {
       };
 
   @override
-  bool operator ==(Object other) =>
-      identical(this, other) || other is _FladderScrollBehavior && other.enableMouseDrag == enableMouseDrag;
+  bool operator ==(Object other) => identical(this, other) || other is _FladderScrollBehavior && other.enableMouseDrag == enableMouseDrag;
 
   @override
   int get hashCode => Object.hash(runtimeType, enableMouseDrag);
@@ -56,6 +56,9 @@ void main(List<String> args) async {
         crashLogProvider.overrideWith((ref) => bootstrap.crashProvider),
         argumentsStateProvider.overrideWith((ref) => bootstrap.argumentsModel),
         syncProvider.overrideWith((ref) => SyncNotifier(ref, bootstrap.applicationDirectory)),
+      ],
+      observers: [
+        RiverpodDevToolsObserver(),
       ],
       child: AdaptiveLayoutBuilder(
         child: (context) => const Main(),
@@ -94,8 +97,8 @@ class _FladderApp extends ConsumerWidget {
     final amoledBlack = ref.watch(clientSettingsProvider.select((value) => value.amoledBlack));
     final mouseDrag = ref.watch(clientSettingsProvider.select((value) => value.mouseDragSupport));
     final schemeVariant = ref.watch(clientSettingsProvider.select((value) => value.schemeVariant));
-    final language = ref.watch(clientSettingsProvider
-        .select((value) => value.selectedLocale ?? WidgetsBinding.instance.platformDispatcher.locale));
+    final language =
+        ref.watch(clientSettingsProvider.select((value) => value.selectedLocale ?? WidgetsBinding.instance.platformDispatcher.locale));
     return DynamicColorBuilder(
       builder: (ColorScheme? lightDynamic, ColorScheme? darkDynamic) {
         final baseLightTheme = themeColor == null
