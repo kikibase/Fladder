@@ -25,7 +25,7 @@ class HomeModel {
   void _addOrUpdateItem(List<ItemBaseModel> list, ItemBaseModel item) {
     final index = list.indexWhere((element) => element.id == item.id);
     if (index != -1) {
-      //list[index] = item; //may want to only update if needed
+      list[index] = item; //may want to only update if needed
     } else {
       list.add(item); //add items based on datetime
     }

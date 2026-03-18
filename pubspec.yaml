@@ -141,7 +141,6 @@ dependencies:
 
   # Fix cjk font rendering issue on Windows
   chinese_font_library: ^1.2.0
-  riverpod_devtools: ^0.4.4
 
 dependency_overrides:
   media_kit:
